@@ -87,9 +87,8 @@ The DINOv2 framework uses a multi-crop augmentation strategy where the student m
 ![8 Crops with Lung Masking](images/8crops-lungmask.png)
 
 The augmentation includes:
-- **Standard Crops (Crops 2, 4, 6, 8)**: Regular spatial crops showing different regions of the CT scan (using first 3 slices)
-- **Masked Crops (Crops 1, 3, 5, 7)**: Crops with lung segmentation masks applied, isolating lung parenchyma and pulmonary vessels (using last 3 slices)
 - **Multi-channel Input**: Combines original CT data (first 3 slices) with mask data (last 3 slices) for enhanced feature learning
+- **Student-Teacher Consistency**: 50% of the lung mask will be applied for the crops in student model, while they need to give the same representation with the Teacher model which sees no lung mask applied
 
 ### Data Path Configuration
 
