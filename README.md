@@ -110,48 +110,6 @@ The loss curves demonstrate:
 - **DINO Global Crops Loss**: Smaller contribution, stabilizing near zero
 - **KoLeo Loss**: Minimal contribution throughout training
 
-### Single Node Training
-
-```bash
-python 1_train.py
-```
-
-### Multi-Node Training with torchrun
-
-1. **Create Headless Service**:
-```bash
-kubectl apply -f k8s-run/headless-service.yaml
-```
-
-2. **Deploy Multi-Node Job**:
-```bash
-kubectl apply -f k8s-run/multi_node_job_service_first.yaml
-```
-
-3. **Monitor Training**:
-```bash
-kubectl logs -f <pod-name> -n yn-gpu-workload
-```
-
-### Single Node Multi-GPU Training
-
-For training on a single node with multiple GPUs, use the `multiple_GPUs.yaml` configuration:
-
-1. **Deploy Single Node Multi-GPU Job**:
-```bash
-kubectl apply -f k8s-run/multiple_GPUs.yaml
-```
-
-2. **Monitor Training**:
-```bash
-kubectl logs -f msalehjahromi-torchrun6-test -n yn-gpu-workload
-```
-
-3. **Check Job Status**:
-```bash
-kubectl get jobs -n yn-gpu-workload
-kubectl describe job msalehjahromi-torchrun6-test -n yn-gpu-workload
-```
 
 #### Multiple GPUs Configuration Details
 
@@ -181,14 +139,14 @@ To modify the configuration for your setup:
 Example for 4 GPUs:
 ```yaml
 args: [
-  "--nproc_per_node=4",  # Changed from 8 to 4
+  "--nproc_per_node=8",  
   # ... other args
 ]
 resources:
   limits:
-    nvidia.com/gpu: "4"  # Changed from 8 to 4
+    nvidia.com/gpu: "8" 
   requests:
-    nvidia.com/gpu: "4"
+    nvidia.com/gpu: "8"
 ```
 
 ### Configuration Files
@@ -198,14 +156,6 @@ resources:
 - `dinov2/configs/ssl_default_config.yaml`: Default SSL configuration
 
 ## Hounsfield Units (HU) Processing
-
-CT scans use Hounsfield Units to represent tissue density:
-
-- **Air**: -1000 HU
-- **Fat**: -100 to -50 HU  
-- **Water**: 0 HU
-- **Soft Tissue**: 20-50 HU
-- **Bone**: 150+ HU
 
 Our normalization maps this range to [0, 1] for neural network training:
 - Clips values to [-1000, 150] HU range
@@ -251,8 +201,6 @@ dinov2-ct/
 │       ├── train/             # Training configurations
 │       └── eval/              # Evaluation configurations
 ├── k8s-run/                   # Kubernetes deployment files
-│   ├── headless-service.yaml
-│   ├── multi_node_job_service_first.yaml
 │   └── multiple_GPUs.yaml
 ├── 1_train.py                 # Main training script
 └── README.md
@@ -327,15 +275,22 @@ This project extends the original DINOv2 implementation. Please refer to the ori
 
 This project is licensed under the Apache License 2.0, following the original DINOv2 license.
 
-## Citation
+### Quick Start
 
-If you use this work, please cite both the original DINOv2 paper and this adaptation:
+**Single Node:**
+```bash
+python 1_train.py
+```
 
-```bibtex
-@misc{oquab2023dinov2,
-  title={DINOv2: Learning Robust Visual Features without Supervision},
-  author={Oquab, Maxime and Darcet, Timothée and Moutakanni, Theo and Vo, Huy V. and Szafraniec, Marc and Khalidov, Vasil and Fernandez, Pierre and Haziza, Daniel and Massa, Francisco and El-Nouby, Alaaeldin and Howes, Russell and Huang, Po-Yao and Xu, Hu and Sharma, Vasu and Li, Shang-Wen and Galuba, Wojciech and Rabbat, Mike and Assran, Mido and Ballas, Nicolas and Synnaeve, Gabriel and Misra, Ishan and Jegou, Herve and Mairal, Julien and Labatut, Patrick and Joulin, Armand and Bojanowski, Piotr},
-  journal={arXiv:2304.07193},
-  year={2023}
-}
+**Multi-Node (Kubernetes):**
+```bash
+kubectl apply -f k8s-run/headless-service.yaml
+kubectl apply -f k8s-run/multi_node_job_service_first.yaml
+kubectl logs -f <pod-name> -n yn-gpu-workload
+```
+
+**Single Node Multi-GPU:**
+```bash
+kubectl apply -f k8s-run/multiple_GPUs.yaml
+kubectl logs -f msalehjahromi-torchrun6-test -n yn-gpu-workload
 ```
