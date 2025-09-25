@@ -2,7 +2,7 @@
 
 This project adapts [DINOv2](https://github.com/facebookresearch/dinov2) for self-supervised learning on CT (Computed Tomography) scans with two key modifications:
 
-• **CT Medical Imaging Support**: Handles 3 slices of medical imaging data with Hounsfield Unit normalization and lung segmentation masking
+• **CT Medical Imaging Support**: Processes 3-slice medical imaging data with innovative custom augmentation strategies
 
 • **Kubernetes Deployment**: Migrated from SLURM to Kubernetes using torchrun for distributed training
 
