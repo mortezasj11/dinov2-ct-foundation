@@ -1,0 +1,6 @@
+# this corresponds to the default config   64,4 originally
+train:
+  dataset_path: CTDataset:h5_file_path=/rsrch7/home/ip/msalehjahromi/datasets/ct_scans.h5:patch_size=512,512,3
+  batch_size_per_gpu: 50
+student:
+  block_chunks: 1

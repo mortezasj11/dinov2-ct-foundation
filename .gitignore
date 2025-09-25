@@ -1,0 +1,16 @@
+# Medical imaging files
+*.nii.gz
+*.nii
+
+# Log folders
+log/
+*/log/
+
+
+# PyTorch model files
+*.pth
+
+# Output directories and files
+output*
+
+

@@ -1,0 +1,81 @@
+# StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: wulab-acc
+  namespace: advanced  # Ensure this is set to the correct namespace if needed
+spec:
+  serviceName: "torchrun"
+  replicas: 2  # Adjust as needed
+  selector:
+    matchLabels:
+      app: torchrun
+  template:
+    metadata:
+      labels:
+        app: torchrun
+    spec:
+      restartPolicy: Always  # Change this to "Always" from "Never"
+      nodeSelector:
+        nvidia.com/cuda.runtime.major: "12"
+        nvidia.com/gpu.machine: "DGXA100-920-23687-2530-000"
+      securityContext:
+        runAsUser: 271030
+        runAsGroup: 600651
+        fsGroup: 600651
+        supplementalGroups:
+          - 1944259512
+          - 1944285520
+          - 1944385884
+      volumes:
+        - name: shm
+          emptyDir:
+            medium: Memory
+            sizeLimit: '21474836480'  # 20 GB shared memory
+        - name: ifp
+          persistentVolumeClaim:
+            claimName: msalehjahromi-gpu-rsrch7-home-ip-rsrch
+        - name: home
+          persistentVolumeClaim:
+            claimName: msalehjahromi-gpu-home
+      containers:
+        - name: main
+          image: hpcharbor.mdanderson.edu/nnunetv2/nnunetv2@sha256:4ab016ba4b356842be74fbf58159480598bfc015c8454339022aa0fcbfdc196d
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              # Extract NODE_RANK from the pod hostname
+              NODE_RANK=${HOSTNAME##*-}
+              MASTER_ADDR="torchrun-0.torchrun"  # Master is the first pod
+              echo "NODE_RANK=$NODE_RANK"
+              echo "MASTER_ADDR=$MASTER_ADDR"
+              torchrun \
+                --nproc_per_node=5 \
+                --nnodes=2 \
+                --node_rank=$NODE_RANK \
+                --master_addr=$MASTER_ADDR \
+                --master_port=29500 \
+                /rsrch1/ip/msalehjahromi/codes/FSDP_test/train.py
+          workingDir: "/rsrch1/ip/msalehjahromi"
+          env:
+            - name: HOME
+              value: "/rsrch1/ip/msalehjahromi"
+            - name: NCCL_DEBUG
+              value: "INFO"
+            - name: NCCL_SOCKET_IFNAME
+              value: "eth0"
+            - name: NCCL_IB_DISABLE
+              value: "1"
+          volumeMounts:
+            - name: shm
+              mountPath: "/dev/shm"
+            - name: ifp
+              mountPath: "/rsrch7/home/ip_rsrch/wulab"
+            - name: home
+              mountPath: "/rsrch1/ip/msalehjahromi/"
+          resources:
+            limits:
+              nvidia.com/gpu: "5"  # Number of GPUs per node
+            requests:
+              nvidia.com/gpu: "5"
+          imagePullPolicy: IfNotPresent

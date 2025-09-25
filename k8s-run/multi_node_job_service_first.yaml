@@ -1,0 +1,114 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: msalehjahromi-torchrun-test
+  #namespace: yn-gpu-workload
+  labels:
+    k8s-user: msalehjahromi
+spec:
+  # ---------------------------
+  # 1) Run 2 pods in parallel for 2-node training
+  # ---------------------------
+  parallelism: 2
+  completions: 2
+
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 60
+
+  template:
+    spec:
+      nodeSelector:
+        nvidia.com/cuda.runtime.major: "12"
+        nvidia.com/gpu.machine: "DGXA100-920-23687-2530-000"
+      securityContext:
+        runAsUser: 271030
+        runAsGroup: 600651
+        fsGroup: 600651
+        supplementalGroups:
+          - 1944259512
+          - 1944285520
+          - 1944385884
+      volumes:
+        - name: shm
+          emptyDir:
+            medium: Memory
+            sizeLimit: '21474836480'  # 20 GB shared memory for efficient GPU communication
+        - name: ifp
+          persistentVolumeClaim:
+            claimName: msalehjahromi-gpu-rsrch7-home-ip-rsrch
+        - name: home
+          persistentVolumeClaim:
+            claimName: msalehjahromi-gpu-home
+
+      restartPolicy: Never
+
+      containers:
+        - name: main
+          image: hpcharbor.mdanderson.edu/nnunetv2/nnunetv2@sha256:4ab016ba4b356842be74fbf58159480598bfc015c8454339022aa0fcbfdc196d
+          command: ["torchrun"]
+          # ----------------------------------------------------
+          # 2) Now we set nnodes=2 and node_rank from env variable
+          # ----------------------------------------------------
+          args: [
+            "--nproc_per_node=8",
+            "--nnodes=2",
+            "--node_rank=$(NODE_RANK)",
+            "--master_addr=$(MASTER_ADDR)",
+            "--master_port=29500",
+            "/rsrch1/ip/msalehjahromi/codes/dinov2-torchrun-dataloader6/1_train.py"
+          ]
+
+          workingDir: "/rsrch1/ip/msalehjahromi"
+          env:
+            - name: HOME
+              value: "/rsrch1/ip/msalehjahromi"
+
+            # ------------------------------------
+            # 3) NODE_RANK depends on Pod index using the
+            #    built-in annotation batch.kubernetes.io/job-completion-index
+            # ------------------------------------
+            - name: NODE_RANK
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['batch.kubernetes.io/job-completion-index']
+
+            # ------------------------------------
+            # 4) MASTER_ADDR: address of the rank=0 Pod
+            #    In a parallel Job with a headless service named the same as the job,
+            #    you can reference the Pod-0 via <jobname>-0.<service>.<namespace>.svc.cluster.local
+            # ------------------------------------
+            - name: MASTER_ADDR
+              value: "msalehjahromi-torchrun-dl5-b8-2-0.msalehjahromi-torchrun-dl5-b8-2.yn-gpu-workload.svc.cluster.local"
+
+            # Standard port for PyTorch distributed
+            - name: MASTER_PORT
+              value: "29500"
+
+            # Enable NCCL debug logs
+            - name: NCCL_DEBUG
+              value: "INFO"
+
+            # Specify network interface
+            - name: NCCL_SOCKET_IFNAME
+              value: "eth0"
+
+            # Disable Infiniband if not available
+            - name: NCCL_IB_DISABLE
+              value: "1"
+
+          volumeMounts:
+            - name: shm
+              mountPath: "/dev/shm"
+            - name: ifp
+              mountPath: "/rsrch7/home/ip_rsrch/wulab"
+            - name: home
+              mountPath: "/rsrch1/ip/msalehjahromi/"
+
+          resources:
+            limits:
+              nvidia.com/gpu: "8"
+            requests:
+              nvidia.com/gpu: "8"
+
+          imagePullPolicy: IfNotPresent
+

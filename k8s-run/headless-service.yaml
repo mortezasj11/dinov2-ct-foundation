@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: msalehjahromi-torchrun-tests
+  namespace: advanced
+spec:
+  # Setting clusterIP to "None" makes it headless
+  clusterIP: None
+  selector:
+    # Match the labels that the Pods get from the Job
+    k8s-user: msalehjahromi
+
+
