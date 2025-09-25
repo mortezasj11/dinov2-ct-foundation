@@ -250,7 +250,7 @@ The trained model's attention patterns can be visualized to understand what feat
 
 The attention visualization shows:
 - **12 Different Attention Heads**: Different heads learn to attend to various aspects of the CT scan anatomy
-- **Anatomical Specialization**: Head 9 focuses on lung interior, Heads 10-11 detect nodules/tumors, Head 6 identifies heart structures
+- **Interesting Observation**: Head 9 focuses on lung interior, Heads 10-11 detect nodules/tumors, Head 6 identifies heart structures
 
 
 ## Contributing
