@@ -19,10 +19,9 @@ The main adaptation is the `CTDataset` class that handles CT scan data:
 - **Data Format**: Loads NPZ files containing CT scan arrays and masks
 - **Hounsfield Unit (HU) Normalization**: 
   - Clips values to medical standard range: -1000 to 150 HU
-  - Normalizes to [0, 1] range with epsilon clipping (0.00005)
-  - This range covers typical CT scan values (air: -1000 HU, bone: 150+ HU)
+  - This range covers typical CT scan values (air: -1000 HU, bone: 150+ HU) 
 - **Multi-channel Input**: Combines image data and mask data as separate channels
-- **Patch Size**: Configurable 3D patch size (default: 512×512×6)
+- **Patch Size**: Configurable 3D patch size (default: 512×512×6) - first 3 slices are CT data, last 3 slices are lung mask data, saved as .npz and loaded 
 - **Error Handling**: Graceful fallback to default images when loading fails
 
 ```python
@@ -88,9 +87,9 @@ The DINOv2 framework uses a multi-crop augmentation strategy where the student m
 ![8 Crops with Lung Masking](images/8crops-lungmask.png)
 
 The augmentation includes:
-- **Standard Crops (Crops 2, 4, 6, 8)**: Regular spatial crops showing different regions of the CT scan
-- **Masked Crops (Crops 1, 3, 5, 7)**: Crops with lung segmentation masks applied, isolating lung parenchyma and pulmonary vessels
-- **Multi-channel Input**: Combines original CT data with mask data for enhanced feature learning
+- **Standard Crops (Crops 2, 4, 6, 8)**: Regular spatial crops showing different regions of the CT scan (using first 3 slices)
+- **Masked Crops (Crops 1, 3, 5, 7)**: Crops with lung segmentation masks applied, isolating lung parenchyma and pulmonary vessels (using last 3 slices)
+- **Multi-channel Input**: Combines original CT data (first 3 slices) with mask data (last 3 slices) for enhanced feature learning
 
 ### Data Path Configuration
 
@@ -223,7 +222,8 @@ dinov2-ct/
 
 ### Basic Training
 ```bash
-python 1_train.py
+kubectl apply -f k8s-run/multiple_GPUs.yaml
+kubectl logs -f msalehjahromi-torchrun6-test -n yn-gpu-workload
 ```
 
 ### Custom Dataset Path
@@ -250,34 +250,17 @@ The trained model's attention patterns can be visualized to understand what feat
 ![Attention Heads Overlay](images/attn_heads_overlay_grid.gif)
 
 The attention visualization shows:
-- **12 Different Attention Heads**: Each head focuses on different anatomical features
-- **Spatial Attention Patterns**: Some heads focus on boundaries (Heads 1, 3, 5, 7), others on internal structures (Heads 0, 4, 6, 9, 10, 11)
-- **Feature Diversity**: Different heads learn to attend to various aspects of the CT scan anatomy
-- **Lung Structure Focus**: Attention patterns align with important anatomical regions in the chest CT
+- **12 Different Attention Heads**: Different heads learn to attend to various aspects of the CT scan anatomy
+- **Anatomical Specialization**: Head 9 focuses on lung interior, Heads 10-11 detect nodules/tumors, Head 6 identifies heart structures
 
-## Troubleshooting
-
-### Common Issues
-
-1. **CUDA Out of Memory**: Reduce batch size or patch size
-2. **Data Loading Errors**: Check NPZ file format and paths
-3. **Multi-node Communication**: Verify headless service and DNS resolution
-4. **Pod Startup Issues**: Check StatefulSet configuration and resource limits
-
-### Memory Management
-
-For large CT scans, consider:
-- Reducing patch size (e.g., 256×256×3 instead of 512×512×6)
-- Using gradient accumulation
-- Enabling mixed precision training
 
 ## Contributing
 
-This project extends the original DINOv2 implementation. Please refer to the original [DINOv2 repository](https://github.com/facebookresearch/dinov2) for base functionality and licensing information.
-
+ ...
+ 
 ## License
 
-This project is licensed under the Apache License 2.0, following the original DINOv2 license.
+ ...
 
 ### Quick Start
 
