@@ -1,6 +1,6 @@
 # DINOv2-CT: Self-Supervised Learning for CT Scans
 
-This project adapts [DINOv2](https://github.com/facebookresearch/dinov2) for self-supervised learning on CT (Computed Tomography) scans, with modifications to handle 3D medical imaging data and deployment on Kubernetes using torchrun instead of SLURM.
+This project adapts [DINOv2](https://github.com/facebookresearch/dinov2) for self-supervised learning on CT (Computed Tomography) scans, with modifications to handle 3 slices of medical imaging data and deployment on Kubernetes using torchrun instead of SLURM.
 
 ## Overview
 
@@ -277,9 +277,10 @@ This project is licensed under the Apache License 2.0, following the original DI
 
 ### Quick Start
 
-**Single Node:**
+**Single Node Multi-GPU (Recommended):**
 ```bash
-python 1_train.py
+kubectl apply -f k8s-run/multiple_GPUs.yaml
+kubectl logs -f msalehjahromi-torchrun6-test -n yn-gpu-workload
 ```
 
 **Multi-Node (Kubernetes):**
@@ -289,8 +290,7 @@ kubectl apply -f k8s-run/multi_node_job_service_first.yaml
 kubectl logs -f <pod-name> -n yn-gpu-workload
 ```
 
-**Single Node Multi-GPU:**
+**Single Node (Local):**
 ```bash
-kubectl apply -f k8s-run/multiple_GPUs.yaml
-kubectl logs -f msalehjahromi-torchrun6-test -n yn-gpu-workload
+python 1_train.py
 ```
